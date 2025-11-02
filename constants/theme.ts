@@ -4,9 +4,27 @@
  */
 
 import { Platform } from 'react-native';
+import { MD3LightTheme as DefaultTheme, MD3Theme } from 'react-native-paper';
 
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
+
+export const appTheme: MD3Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#6BA7FF',       // fő szín - halványkék
+    secondary: '#55C595',     // kiemelés - zöld
+    background: '#F5F7FB',    // app háttér
+    surface: '#FFFFFF',       // kártyák, modálok
+    onSurface: '#222222',          // fő szöveg
+    error: '#FF6B6B',         // hibák
+    outline: '#E0E0E0',       // finom határok
+    onSurfaceVariant: '#6C757D', // másodlagos szöveg
+  },
+  roundness: 8,
+};
+
 
 export const Colors = {
   light: {

@@ -1,98 +1,231 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { format } from 'date-fns';
+import { hu } from 'date-fns/locale';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import {
+  ActivityIndicator,
+  Card,
+  FAB,
+  Text,
+  useTheme,
+} from 'react-native-paper';
+import ExpenseList from '../../components/ExpenseList';
+import { getBudgetMonths } from '../../services/budgetService';
+import type { BudgetMonth } from '../../types/budget';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const HomeScreen: React.FC = () => {
+  const theme = useTheme();
+  const router = useRouter();
 
-export default function HomeScreen() {
+  // 🔹 majd auth contextből jön:
+  const token = 'TOKEN_IDE';
+  const [budgetMonth, setBudgetMonth] = useState<BudgetMonth | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
+
+  // Fetch current month's budget
+  const fetchBudgetData = async () => {
+    try {
+      setIsLoading(true);
+      const months = await getBudgetMonths(token);
+      if (months.length > 0) {
+        const now = new Date();
+        const currentMonth = months.find(
+          (m: BudgetMonth) => new Date(m.month).getMonth() === now.getMonth()
+        );
+        setBudgetMonth(currentMonth || months[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch budget months:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBudgetData();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBudgetData();
+    setRefreshing(false);
+  };
+
+  // számolás: maradék százalék
+  const remainingPercent =
+    budgetMonth && budgetMonth.total_budget > 0
+      ? Math.max(
+        0,
+        Math.min(
+          100,
+          (Number(budgetMonth.remaining_budget) /
+            Number(budgetMonth.total_budget)) *
+          100
+        )
+      )
+      : 0;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={{ padding: 16 }}
+      >
+        <Text
+          variant="headlineSmall"
+          style={{
+            color: theme.colors.primary,
+            fontWeight: '600',
+            marginBottom: 12,
+          }}
+        >
+          {format(new Date(), 'yyyy. MMMM', { locale: hu })} havi költségvetés
+        </Text>
+
+        {/* Ha betölt */}
+        {isLoading ? (
+          <ActivityIndicator
+            animating={true}
+            color={theme.colors.primary}
+            style={{ marginTop: 40 }}
+          />
+        ) : (
+          <>
+            {/* Kártya a havi kerethez */}
+            <Card
+              style={{
+                marginBottom: 20,
+                paddingVertical: 20,
+                backgroundColor: theme.colors.surface,
+                borderRadius: 16,
+                elevation: 3,
+              }}
+            >
+              <Card.Content
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View>
+                  <Text
+                    variant="titleMedium"
+                    style={{ color: theme.colors.onSurfaceVariant }}
+                  >
+                    Elérhető keret:
+                  </Text>
+                  <Text
+                    variant="headlineMedium"
+                    style={{
+                      color: theme.colors.primary,
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {budgetMonth
+                      ? `${budgetMonth.remaining_budget.toLocaleString('hu-HU')} Ft`
+                      : '—'}
+                  </Text>
+                  {budgetMonth && (
+                    <Text
+                      style={{
+                        color: theme.colors.onSurfaceVariant,
+                        fontSize: 13,
+                        marginTop: 4,
+                      }}
+                    >
+                      Összesen: {budgetMonth.total_budget.toLocaleString('hu-HU')} Ft
+                    </Text>
+                  )}
+                </View>
+
+                {/* Félkör progress (egyszerű placeholder) */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: 16,
+                    padding: 16,
+                    marginBottom: 16,
+                    elevation: 2,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontSize: 16, color: theme.colors.onSurfaceVariant }}>
+                      Havi költségkeret
+                    </Text>
+                    <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.colors.primary }}>
+                      {budgetMonth?.remaining_budget?.toLocaleString('hu-HU')} Ft
+                    </Text>
+                  </View>
+
+                  <AnimatedCircularProgress
+                    size={80}
+                    width={8}
+                    fill={remainingPercent}
+                    tintColor={theme.colors.primary}
+                    backgroundColor={theme.colors.outline}
+                    rotation={0}
+                    lineCap="round"
+                  >
+                    {(fill: number) => (
+                      <Text style={{ fontSize: 16, color: theme.colors.onSurface }}>
+                        {Math.round(fill)}%
+                      </Text>
+                    )}
+                  </AnimatedCircularProgress>
+                </View>
+
+              </Card.Content>
+            </Card>
+
+            {/* Kiadások listája */}
+            {budgetMonth ? (
+              <ExpenseList
+                token={token}
+                budgetMonthId={budgetMonth.id}
               />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+            ) : (
+              <Text style={{ color: theme.colors.onSurfaceVariant }}>
+                Még nincs rögzített havi keret.
+              </Text>
+            )}
+          </>
+        )}
+      </ScrollView>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Lebegő gomb csoport */}
+      <FAB.Group
+        open={fabOpen}
+        visible
+        icon={fabOpen ? 'close' : 'plus'}
+        onStateChange={({ open }) => setFabOpen(open)}
+        actions={[
+          {
+            icon: 'calendar-plus',
+            label: 'Új fix költség',
+            onPress: () => router.push('/add-fixed-expense'),
+          },
+          {
+            icon: 'plus-circle-outline',
+            label: 'Új kiadás',
+            onPress: () => router.push('/add-expense'),
+          },
+        ]}
+        style={{
+          paddingBottom: 60,
+        }}
+      />
+    </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default HomeScreen;
