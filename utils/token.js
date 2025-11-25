@@ -1,14 +1,13 @@
 import { jwtDecode } from 'jwt-decode';
-import type { DecodedToken, User } from '../types/user';
 
-export function getUserFromToken(token: string): User | null {
+export function getUserFromToken(token) {
   try {
-    const decoded = jwtDecode<DecodedToken>(token);
+    const decoded = jwtDecode(token);
     return {
       id: decoded.id,
       email: decoded.email,
       displayName: decoded.displayName,
-      isVerified: true, 
+      isVerified: true,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
   } catch (error) {

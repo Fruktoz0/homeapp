@@ -4,12 +4,12 @@
  */
 
 import { Platform } from 'react-native';
-import { MD3LightTheme as DefaultTheme, MD3Theme } from 'react-native-paper';
+import { MD3LightTheme as DefaultTheme } from 'react-native-paper';
 
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
-export const appTheme: MD3Theme = {
+export const appTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,

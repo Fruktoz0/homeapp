@@ -63,3 +63,11 @@ export interface BudgetMonthsResponse {
   allMonths: BudgetMonth[];
   currentMonth: BudgetMonth | null;
 }
+
+// Új típus a hónaplista kezelésére
+export interface MonthDisplay {
+  id: number;
+  month: string;
+  displayName: string; // pl. "2025. november"
+  date: Date;
+}

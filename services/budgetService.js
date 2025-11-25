@@ -1,26 +1,21 @@
 import axios from 'axios';
 import { API_URL } from '../constants/config';
-import type {
-    BudgetExpense,
-    BudgetFixedExpense,
-    BudgetMonth,
-    BudgetMonthsResponse,
-    BudgetWeek
-} from '../types/budget';
+
 
 
 // Fetch budget months for the logged-in user
-export async function getBudgetMonths(token: string): Promise<BudgetMonthsResponse> {
+export async function getBudgetMonths(token, month) {
     const res = await axios.get(`${API_URL}/budget/months`, {
         headers: {
             Authorization: `Bearer ${token}`
         },
+        params: { month }
     });
     return res.data;
 }
 
 //create or update a budget month
-export async function createOrUpdateMonth(token: string, month: string, total_budget: number): Promise<BudgetMonth> {
+export async function createOrUpdateMonth(token, month, total_budget) {
     const res = await axios.post(
         `${API_URL}/budget/month`, { month, total_budget }, {
         headers: {
@@ -32,7 +27,7 @@ export async function createOrUpdateMonth(token: string, month: string, total_bu
 }
 
 //Get all budget weeks for a month
-export async function getBudgetWeeks(token: string, monthId: number): Promise<BudgetWeek[]> {
+export async function getBudgetWeeks(token, monthId) {
     const res = await axios.get(`${API_URL}/budget/weeks/${monthId}`, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -42,7 +37,7 @@ export async function getBudgetWeeks(token: string, monthId: number): Promise<Bu
 }
 
 //Get all expenses for a specific budget month
-export async function getBudgetExpenses(token: string, monthId: number): Promise<BudgetExpense[]> {
+export async function getBudgetExpenses(token, monthId) {
     const res = await axios.get(`${API_URL}/budget/expenses/${monthId}`, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -52,7 +47,7 @@ export async function getBudgetExpenses(token: string, monthId: number): Promise
 }
 
 //Create a new expense for a budget month
-export async function createExpense(token: string, expense: Omit<BudgetExpense, 'id'>): Promise<BudgetExpense> {
+export async function createExpense(token, expense) {
     const res = await axios.post(`${API_URL}/budget/expenses`, expense, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -62,7 +57,7 @@ export async function createExpense(token: string, expense: Omit<BudgetExpense, 
 }
 
 //Delete an expense by ID
-export async function deleteExpense(token: string, id: number): Promise<{ message: string }> {
+export async function deleteExpense(token, id) {
     const res = await axios.delete(`${API_URL}/budget/expense/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -72,7 +67,7 @@ export async function deleteExpense(token: string, id: number): Promise<{ messag
 }
 
 //Get all fixed expenses
-export async function getFixedExpenses(token: string): Promise<BudgetFixedExpense[]> {
+export async function getFixedExpenses(token) {
     const res = await axios.get(`${API_URL}/budget/fixed-expenses`, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -82,7 +77,7 @@ export async function getFixedExpenses(token: string): Promise<BudgetFixedExpens
 }
 
 //Create a new fixed expense
-export async function createFixedExpense(token: string, fixedExpense: Omit<BudgetFixedExpense, 'id'>): Promise<BudgetFixedExpense> {
+export async function createFixedExpense(token, fixedExpense) {
     const res = await axios.post(`${API_URL}/budget/fixed-expense`, fixedExpense, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -93,7 +88,7 @@ export async function createFixedExpense(token: string, fixedExpense: Omit<Budge
 }
 
 //Mark a fixed expense as paid
-export async function markFixedExpensePaid(token: string, id: number): Promise<{ message: string }> {
+export async function markFixedExpensePaid(token, id) {
     const res = await axios.put(
         `${API_URL}/budget/fixed-expense/${id}/paid`, {}, {
         headers: {
@@ -105,7 +100,7 @@ export async function markFixedExpensePaid(token: string, id: number): Promise<{
 }
 
 //Delete a fixed expense by ID
-export async function deleteFixedExpense(token: string, id: number): Promise<{ message: string }> {
+export async function deleteFixedExpense(token, id) {
     const res = await axios.delete(`${API_URL}/budget/fixed-expense/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -115,7 +110,7 @@ export async function deleteFixedExpense(token: string, id: number): Promise<{ m
 }
 
 //Update budget month total budget
-export async function updateBudgetMonth(token: string, monthId: number, total_budget: number) {
+export async function updateBudgetMonth(token, monthId, total_budget) {
     const res = await axios.put(`${API_URL}/budget/month/${monthId}`, { total_budget }, {
         headers: {
             Authorization: `Bearer ${token}`
